@@ -20,22 +20,7 @@ namespace Library
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            PopulateBooks();
             PopulateGenres();
-        }
-
-        private void PopulateBooks()
-        {
-            using (_connection = new SqlConnection(_connectionString))
-            using (SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM Book", _connection))
-            {
-                DataTable bookTable = new DataTable();
-                adapter.Fill(bookTable);
-
-                ListBooks.DisplayMember = "Name";
-                ListBooks.ValueMember = "Id";
-                ListBooks.DataSource = bookTable;
-            }
         }
 
         private void PopulateGenres()
@@ -49,6 +34,32 @@ namespace Library
                 ListGenres.DisplayMember = "Name";
                 ListGenres.ValueMember = "Id";
                 ListGenres.DataSource = genreTable;
+            }
+        }
+
+        private void ListGenres_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            PopulateBooks();
+        }
+
+        private void PopulateBooks()
+        {
+            string query = "SELECT a.Name FROM Book a " +
+                           "INNER JOIN BookGenre b ON a.Id = b.BookId " +
+                           "WHERE b.GenreId = @GenreId";
+
+            using (_connection = new SqlConnection(_connectionString))
+            using (SqlCommand command = new SqlCommand(query, _connection))
+            using (SqlDataAdapter adapter = new SqlDataAdapter(command))
+            {
+                command.Parameters.AddWithValue("@GenreId", ListGenres.SelectedValue);
+
+                DataTable bookTable = new DataTable();
+                adapter.Fill(bookTable);
+
+                ListBooks.DisplayMember = "Name";
+                ListBooks.ValueMember = "Id";
+                ListBooks.DataSource = bookTable;
             }
         }
     }
